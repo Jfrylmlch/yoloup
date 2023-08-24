@@ -3,7 +3,7 @@ yoloup
 yoloup is a simple commandline utility to update yolo annotation files based on a new class file.
 
 ### Why should I use yoloup?
-Many offline labelling does not provide a way to save your annotation projects in between. Every time you start a new session to label a new set of images, the class index will start from 0 rather than your last class index + 1. That means, a new class file will be generated, which has no relationship with your last class file. For example, "elephant" indexed at 0 in your last class file might end up indexed at 5 in your current class file.
+Many offline labelling softwares do not provide a way to save your annotation projects in between. Every time you start a new session to label a new set of images, the class index will start from 0 rather than your last class index + 1. That means, a new class file will be generated, which has no relationship with your last class file. For example, "elephant" indexed at 0 in your last class file might end up indexed at 5 in your current class file.
 
 ### Usage
 ```{sh}
@@ -24,7 +24,7 @@ elephant
 lion
 horse
 ```
-Suppose you now have an updated class file "target.txt", which include more classes than labels.txt but the order is messed up. For example, elephant is move from index 0 to index 2.
+Suppose you now have an updated class file "target.txt", which includes more classes than labels.txt but the order is messed up. For example, elephant is move from index 0 to index 2.
 ```
 donkey
 tiger
@@ -43,6 +43,17 @@ This will change RCNX0001.txt to:
 2 0.449951 0.490972 0.232910 0.276389
 5 0.348754 0.402843 0.252323 0.306251
 ```
+You can update multiple yolo annotation files by
+```
+yoloup ./labels.txt ./target.txt ./RCNX0001.txt ./RCNX0002.txt ./RCNX0003.txt
+```
+Or even process all yolo annotation files in subdirectories recursively. Here is an example (assume that there is only one labels.txt in each directory and the yolo annotation files' name starts with "RCNX" and ends with ".txt")
+```
+find . -iregex '.*label.*\.txt$' -exec sh -c 'yoloup "{}" ./target.txt "$(dirname {})"/RCNX*.txt' \;
+```
+You can change this command to adapt to your needs. But make sure the command is correct or it might ruin all of your labelling work.
+
+
 
 
 
