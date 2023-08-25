@@ -11,7 +11,8 @@ import (
 )
 
 func main() {
-	flag.Bool("h", false, "Print help information.")
+	flag.Bool("h", false, "Print help information")
+	printUpdatedYoloAnnotationFile := flag.Bool("n", false, "Print updated yolo annotation file to stdout")
 	requestConfirmation := flag.Bool("i", false, "Request confirmation before attempting to update each file")
 	flag.Parse()
 	args := flag.Args()
@@ -30,13 +31,28 @@ func main() {
 		}
 	}
 	for _, yoloAnnoationFile := range args[2:] {
+		originalYoloAnnotation := ReadFile(yoloAnnoationFile)
+		updatedYoloAnnotation, e := UpdateYoloAnnotationFile(originalClasses, targetClasses, originalYoloAnnotation)
+		if e != nil {
+			log.Fatalf("Error on %s: %v", yoloAnnoationFile, e)
+		}
+		if *printUpdatedYoloAnnotationFile {
+			fmt.Printf("Updated %s: \n", yoloAnnoationFile)
+			fmt.Printf("%s\n", updatedYoloAnnotation)
+			continue
+		}
 		if *requestConfirmation {
+			fmt.Printf("Original %s: \n", yoloAnnoationFile)
+			fmt.Printf("%s", originalYoloAnnotation)
+			fmt.Printf("Updated %s: \n", yoloAnnoationFile)
+			fmt.Printf("%s\n", updatedYoloAnnotation)
 			confirmUpdate := CheckYesNo(Input(fmt.Sprintf("Update '%s' [N/y]? ", yoloAnnoationFile)))
+			fmt.Printf("\n")
 			if !confirmUpdate {
 				continue
 			}
 		}
-		UpdateYoloAnnotationFile(originalClasses, targetClasses, yoloAnnoationFile)
+		WriteFile(yoloAnnoationFile, updatedYoloAnnotation)
 	}
 
 }
@@ -59,10 +75,18 @@ func Input(question string) string {
 	return input
 }
 
-func UpdateYoloAnnotationFile(originalClasses map[uint]string, targetClasses map[string]uint, yoloAnnoationFile string) {
-	f, scanner := FileReader(yoloAnnoationFile)
+func ReadFile(path string) string {
+	f, scanner := FileReader(path)
+	builder := strings.Builder{}
 	defer f.Close()
+	for scanner.Scan() {
+		builder.WriteString(fmt.Sprintf("%s\n", scanner.Text()))
+	}
+	return builder.String()
+}
 
+func UpdateYoloAnnotationFile(originalClasses map[uint]string, targetClasses map[string]uint, yoloAnnoation string) (string, error) {
+	scanner := bufio.NewScanner(strings.NewReader(yoloAnnoation))
 	lines := make([]string, 0)
 	for scanner.Scan() {
 		columns := strings.Fields(strings.TrimSpace(scanner.Text()))
@@ -70,13 +94,15 @@ func UpdateYoloAnnotationFile(originalClasses map[uint]string, targetClasses map
 		if e != nil {
 			log.Fatal(e)
 		}
-		updatedClassIdx := targetClasses[originalClasses[uint(classIdx)]]
+		updatedClassIdx, found := targetClasses[originalClasses[uint(classIdx)]]
+		if !found {
+			return "", fmt.Errorf("Failed to remap class index %d\n", classIdx)
+		}
+
 		columns[0] = strconv.FormatUint(uint64(updatedClassIdx), 10)
 		lines = append(lines, strings.Join(columns, " "))
 	}
-
-	WriteFile(yoloAnnoationFile, strings.Join(lines, "\n"))
-
+	return strings.Join(lines, "\n"), nil
 }
 
 func Usage() {

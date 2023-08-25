@@ -6,12 +6,12 @@ yoloup is a simple commandline utility to update yolo annotation files based on 
 Many offline labelling softwares do not provide a way to save your annotation projects in between. Every time you start a new session to label a new set of images, the class index will start from 0 rather than your last class index + 1. That means, a new class file will be generated, which has no relationship with your last class file. For example, "elephant" indexed at 0 in your last class file might end up indexed at 5 in your current class file. This problem becomes critical when the labelling work is distributed to several people as everyone has their own class file. yoloup allows you to update multiple yolo annotation files all at once based on a new class file. 
 
 ### Usage
-```{sh}
-Usage: yoloup [OPTIONS] [orginal_class_file] [updated_class_file] [yolo_annotation_file ...]
-  -h    Print help information.
-  -i    Request confirmation before attempting to update each file
 ```
-
+Usage: yoloup [OPTIONS] [orginal_class_file] [updated_class_file] [yolo_annotation_file ...]
+  -h	Print help information
+  -i	Request confirmation before attempting to update each file
+  -n	Print updated yolo annotation file to stdout
+```
 ### Examples
 Let's say there is a yolo annotation file "RCNX0001.txt"
 ```
@@ -34,11 +34,11 @@ cat
 lion
 horse
 ```
-And you want use a new set of indexes based on a new class file "target.txt" instead of "labels.txt" to include more classes, you can do the following:
+And you want to use a new set of indices based on a new class file "target.txt" instead of "labels.txt" to include more classes, you can do the following:
 ```
 yoloup ./labels.txt ./target.txt ./RCNX0001.txt
 ```
-This will change RCNX0001.txt to:
+This will transform RCNX0001.txt into:
 ```
 2 0.449951 0.490972 0.232910 0.276389
 5 0.348754 0.402843 0.252323 0.306251
@@ -47,7 +47,7 @@ You can update multiple yolo annotation files by
 ```
 yoloup ./labels.txt ./target.txt ./RCNX0001.txt ./RCNX0002.txt ./RCNX0003.txt
 ```
-Or even process all yolo annotation files in subdirectories recursively. Here is an example (assume that there is only one labels.txt in each directory and the yolo annotation files' name starts with "RCNX" and ends with ".txt")
+or even process all yolo annotation files in subdirectories recursively. Here is an example (assume that there is only one labels.txt in each directory and the yolo annotation files' name starts with "RCNX" and ends with ".txt")
 ```
 find . -iregex '.*label.*\.txt$' -exec sh -c 'yoloup "{}" ./target.txt "$(dirname {})"/RCNX*.txt' \;
 ```
